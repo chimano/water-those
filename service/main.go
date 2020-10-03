@@ -2,8 +2,16 @@ package main
 
 import (
 	"fmt"
+
+	"github.com/chimano/water-those-service/api"
 )
 
 func main() {
-	fmt.Println("Hello World!")
+	srv, err := api.NewServer()
+
+	if err != nil {
+		fmt.Println("ouch")
+	}
+
+	srv.Start()
 }
