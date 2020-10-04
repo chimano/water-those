@@ -1,0 +1,21 @@
+version: "3.4"
+services:
+  service-db:
+    build:
+      context: ./mongodb
+    container_name: "mongodb"
+    ports:
+      - "27017:27017"
+    volumes:
+      - "mongodb:/data/db"
+  service:
+    build:
+      context: ./service
+    ports:
+      - "3000:3000"
+    depends_on:
+      - "service-db"
+    restart: on-failure
+
+volumes:
+  mongodb:
