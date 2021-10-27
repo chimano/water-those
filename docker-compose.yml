@@ -3,12 +3,12 @@ services:
   service-db:
     build:
       context: ./mongodb
-    container_name: "mongodb"
     ports:
       - "27017:27017"
     volumes:
       - "mongodb:/data/db"
   service:
+    container_name: "water-those"
     build:
       context: ./service
     ports:
