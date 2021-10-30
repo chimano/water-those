@@ -8,7 +8,6 @@ services:
     volumes:
       - "mongodb:/data/db"
   service:
-    container_name: "water-those"
     build:
       context: ./service
     ports:
