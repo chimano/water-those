@@ -1,12 +1,12 @@
 package plants
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
 
+	"github.com/chimano/water-those-service/api/db"
 	"github.com/go-chi/chi"
 	"github.com/go-chi/render"
 	"go.mongodb.org/mongo-driver/bson"
@@ -16,7 +16,6 @@ import (
 
 type PlantResource struct {
 	plantCollection *mongo.Collection
-	ctx             context.Context
 }
 
 type plant struct {
@@ -29,14 +28,13 @@ type plantResponse struct {
 }
 
 type plantInsertResponse struct {
-	ID string `json:"id"`
+	ID string `json:"id" bson:"_id"`
 }
 
 // NewPlantResource creates and returns a plant resource.
-func NewPlantResource(ctx context.Context, plantCollection *mongo.Collection) *PlantResource {
+func NewPlantResource(plantCollection *mongo.Collection) *PlantResource {
 	return &PlantResource{
 		plantCollection: plantCollection,
-		ctx:             ctx,
 	}
 }
 
@@ -56,11 +54,18 @@ func newPlantInsertResponse(id interface{}) *plantInsertResponse {
 
 func (rs *PlantResource) get(w http.ResponseWriter, r *http.Request) {
 	plantId := chi.URLParam(r, "plantId")
-	filter := bson.D{{Key: "_id", Value: plantId}}
+	hexId, err := primitive.ObjectIDFromHex(plantId)
+	if err != nil {
+		log.Println("Invalid id")
+	}
+	filter := bson.D{{Key: "_id", Value: hexId}}
 
 	var p plant
 
-	err := rs.plantCollection.FindOne(rs.ctx, filter).Decode(&p)
+	ctx, cancel := db.GetContextWithDefaultTimeout()
+	defer cancel()
+
+	err = rs.plantCollection.FindOne(ctx, filter).Decode(&p)
 	if err != nil {
 		log.Println(err)
 		return
@@ -78,7 +83,10 @@ func (rs *PlantResource) post(w http.ResponseWriter, r *http.Request) {
 	}
 	fmt.Print(p)
 
-	res, err := rs.plantCollection.InsertOne(rs.ctx, p)
+	ctx, cancel := db.GetContextWithDefaultTimeout()
+	defer cancel()
+
+	res, err := rs.plantCollection.InsertOne(ctx, p)
 	if err != nil {
 		render.Respond(w, r, err.Error())
 		return
