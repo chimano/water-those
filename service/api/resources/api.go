@@ -3,7 +3,6 @@ package resources
 import (
 	"context"
 	"log"
-	"time"
 
 	"github.com/chimano/water-those-service/api/resources/plants"
 	"github.com/go-chi/chi"
@@ -18,9 +17,7 @@ type API struct {
 
 // NewAPI configures and returns application API.
 func NewAPI() *API {
-	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
-	defer cancel()
-	client, err := mongo.Connect(context.TODO(), options.Client().ApplyURI("mongodb://service-db:27017"))
+	client, err := mongo.Connect(context.TODO(), options.Client().ApplyURI("mongodb://service-db:27017/"))
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -30,7 +27,7 @@ func NewAPI() *API {
 
 	plantCollection := client.Database("water-those-db").Collection("plants")
 
-	plant := plants.NewPlantResource(ctx, plantCollection)
+	plant := plants.NewPlantResource(plantCollection)
 	api := &API{
 		Plant: plant,
 	}
