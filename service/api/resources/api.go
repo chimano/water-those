@@ -20,8 +20,11 @@ type API struct {
 func NewAPI() *API {
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancel()
-	client, err := mongo.Connect(ctx, options.Client().ApplyURI("mongodb://service-db:27017"))
+	client, err := mongo.Connect(context.TODO(), options.Client().ApplyURI("mongodb://service-db:27017"))
 	if err != nil {
+		log.Fatal(err)
+	}
+	if err = client.Ping(context.TODO(), nil); err != nil {
 		log.Fatal(err)
 	}
 

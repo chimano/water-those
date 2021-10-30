@@ -4,10 +4,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 
 	"github.com/go-chi/chi"
 	"github.com/go-chi/render"
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 )
@@ -40,7 +42,7 @@ func NewPlantResource(ctx context.Context, plantCollection *mongo.Collection) *P
 
 func (rs *PlantResource) Router() *chi.Mux {
 	r := chi.NewRouter()
-	r.Get("/", rs.get)
+	r.Get("/{plantId}", rs.get)
 	r.Post("/", rs.post)
 	return r
 }
@@ -52,14 +54,18 @@ func newPlantInsertResponse(id interface{}) *plantInsertResponse {
 	}
 }
 
-func newPlantFetchResponse() *plantResponse {
-	return &plantResponse{
-		Msg: "Hello World",
-	}
-}
-
 func (rs *PlantResource) get(w http.ResponseWriter, r *http.Request) {
-	render.Respond(w, r, newPlantFetchResponse())
+	plantId := chi.URLParam(r, "plantId")
+	filter := bson.D{{Key: "_id", Value: plantId}}
+
+	var p plant
+
+	err := rs.plantCollection.FindOne(rs.ctx, filter).Decode(&p)
+	if err != nil {
+		log.Println(err)
+		return
+	}
+	render.Respond(w, r, p)
 }
 
 func (rs *PlantResource) post(w http.ResponseWriter, r *http.Request) {
